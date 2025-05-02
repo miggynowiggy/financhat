@@ -1,18 +1,29 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, Send, Lock, FileText, Shield } from "lucide-react"
+import { Upload, Send, Lock, FileText, Shield, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useChat } from "ai/react"
+import { useSession, signOut } from "next-auth/react"
 import PDFUploader from "@/components/pdf-uploader"
+import RequestMoreUploads from "@/components/request-more-uploads"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export default function BankStatementAnalyzer() {
+  const { data: session } = useSession()
+  const router = useRouter()
+  const { toast } = useToast()
   const [pdfFile, setPdfFile] = useState<{ file: File; data: ArrayBuffer } | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState("upload")
+  const [showRequestForm, setShowRequestForm] = useState(false)
+
+  // Get user's remaining uploads
+  const uploadsRemaining = session?.user?.usage?.uploadsRemaining || 0
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
@@ -36,9 +47,34 @@ export default function BankStatementAnalyzer() {
     },
   })
 
-  const handlePdfProcessed = (file: File, pdfBytes: ArrayBuffer) => {
+  const handlePdfProcessed = async (file: File, pdfBytes: ArrayBuffer) => {
+    // Check if user has uploads remaining
+    if (uploadsRemaining <= 0) {
+      toast({
+        title: "Upload limit reached",
+        description: "You've used all your trial uploads. Please request more uploads.",
+        variant: "destructive",
+      })
+      setShowRequestForm(true)
+      return
+    }
+
+    // Proceed with upload
     setPdfFile({ file, data: pdfBytes })
     setIsAnalyzing(true)
+
+    // Update user's remaining uploads in the database
+    try {
+      await fetch("/api/usage/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "decrementUploads" }),
+      })
+    } catch (error) {
+      console.error("Failed to update usage:", error)
+    }
   }
 
   return (
@@ -50,9 +86,44 @@ export default function BankStatementAnalyzer() {
               <CardTitle className="text-2xl font-bold">Financhat</CardTitle>
               <CardDescription>Chat with your bank statements securely and privately</CardDescription>
             </div>
-            <div className="flex items-center text-green-600 text-sm">
-              <Shield className="h-4 w-4 mr-1" />
-              <span>Privacy-First</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center text-green-600 text-sm">
+                <Shield className="h-4 w-4 mr-1" />
+                <span>Privacy-First</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/login" })}>
+                <LogOut className="h-4 w-4 mr-1" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+
+          {/* User info and usage */}
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center">
+              {session?.user?.image && (
+                <img
+                  src={session.user.image || "/placeholder.svg"}
+                  alt={session.user.name || "User"}
+                  className="h-6 w-6 rounded-full mr-2"
+                />
+              )}
+              <span className="text-sm text-gray-600">{session?.user?.name}</span>
+            </div>
+            <div className="text-sm">
+              <span className={`font-medium ${uploadsRemaining > 0 ? "text-green-600" : "text-amber-600"}`}>
+                {uploadsRemaining} upload{uploadsRemaining !== 1 ? "s" : ""} remaining
+              </span>
+              {uploadsRemaining === 0 && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-xs p-0 h-auto ml-2"
+                  onClick={() => setShowRequestForm(true)}
+                >
+                  Request more
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -89,7 +160,20 @@ export default function BankStatementAnalyzer() {
                 </div>
               </div>
 
-              <PDFUploader onPdfProcessed={handlePdfProcessed} />
+              {uploadsRemaining > 0 ? (
+                <PDFUploader onPdfProcessed={handlePdfProcessed} />
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <div className="text-amber-600 mb-2">
+                    <Shield className="h-10 w-10 mx-auto mb-2" />
+                    <h3 className="text-lg font-medium">Trial Limit Reached</h3>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    You've used your trial upload. Request more uploads to continue using the service.
+                  </p>
+                  <Button onClick={() => setShowRequestForm(true)}>Request More Uploads</Button>
+                </div>
+              )}
 
               {isAnalyzing && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-md text-sm text-blue-700 flex items-center">
@@ -163,6 +247,9 @@ export default function BankStatementAnalyzer() {
           model that does not retain your financial information.
         </p>
       </div>
+
+      {/* Request More Uploads Dialog */}
+      <RequestMoreUploads open={showRequestForm} onOpenChange={setShowRequestForm} />
     </div>
   )
 }
