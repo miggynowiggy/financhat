@@ -1,30 +1,20 @@
-# Bank statement chat app
+# FinanChat: Your Personal AI Financial Advisor
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Get instant, personalized financial guidance at your fingertips. Simply upload your bank statement and start chatting with your dedicated AI advisor who understands your unique financial situation.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/miguel-mendozas-projects-b4eca69a/v0-bank-statement-chat-app)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/y7FnBs0tZdg)
+**✓ Private & Secure**
+Your data stays yours. Bank statements are never stored and only processed during your chat session.
 
-## Overview
+**✓ Privacy-First AI**
+Built with cutting-edge privacy protection technology to keep your sensitive information safe.
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+**✓ Your Data, Your Control**
+Feel free to mask sensitive details before uploading - you decide what to share.
 
-## Deployment
+Experience professional financial advice that's instant, intelligent, and always confidential. Start your conversation with FinanChat today.
 
-Your project is live at:
+## Preview
 
-**[https://vercel.com/miguel-mendozas-projects-b4eca69a/v0-bank-statement-chat-app](https://vercel.com/miguel-mendozas-projects-b4eca69a/v0-bank-statement-chat-app)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/y7FnBs0tZdg](https://v0.dev/chat/projects/y7FnBs0tZdg)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+![landing_page](landing.png)
+![uploading of bank statement](bank_statement_upload.png)
+![chatting feature](chat_area.png)
