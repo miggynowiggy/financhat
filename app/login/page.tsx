@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { useState, useEffect } from "react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,12 +9,21 @@ import { FileText, Shield } from "lucide-react"
 import Image from "next/image"
 
 export default function LoginPage() {
+  const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  useEffect(() => {
+    if (session?.user) {
+      // Redirect to the dashboard if the user is already signed in
+      router.push("/")
+    }
+  }, [session])
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn("google", { callbackUrl: "/" })
+    await signIn("google", { redirectTo: "/" })
+    setIsLoading(false)
   }
 
   return (
@@ -59,7 +68,7 @@ export default function LoginPage() {
             {isLoading ? (
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
             ) : (
-              <Image src="/google-logo.png" width={18} height={18} alt="Google" className="mr-2" />
+              <Image src="google-logo.png" width={18} height={18} alt="Google" className="mr-2" />
             )}
             Continue with Google
           </Button>
